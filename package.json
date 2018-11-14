@@ -1,6 +1,6 @@
 {
   "name": "fauxerhose-destination-s3",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A destination for S3 files (ideally for Athena queries)",
   "main": "s3-destination.js",
   "scripts": {
