@@ -10,8 +10,10 @@ class S3Destination extends Writable {
   constructor(options) {
     super({ objectMode: true });
 
-    Object.assign(this, options);
-
+    this.bucket = options.buclet;
+    this.client = options.client;
+    this.getValue = options.value;
+    this.getPartition = options.partition;
     this.uploads = new Map();
   }
 
