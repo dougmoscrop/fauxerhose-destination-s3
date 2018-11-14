@@ -1,0 +1,31 @@
+{
+  "name": "fauxerhose-destination-s3",
+  "version": "0.0.0",
+  "description": "A destination for S3 files (ideally for Athena queries)",
+  "main": "s3-destination.js",
+  "scripts": {
+    "test": "nyc --all ava",
+    "posttest": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dougmoscrop/fauxerhose-destination-s3.git"
+  },
+  "keywords": [
+    "fauxerhose",
+    "lambda",
+    "aws"
+  ],
+  "author": "Doug Moscrop <doug.moscrop@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dougmoscrop/fauxerhose-destination-s3/issues"
+  },
+  "homepage": "https://github.com/dougmoscrop/fauxerhose-destination-s3#readme",
+  "devDependencies": {
+    "ava": "^0.25.0",
+    "aws-sdk": "^2.355.0",
+    "eslint": "^5.9.0",
+    "nyc": "^13.1.0"
+  }
+}
