@@ -65,7 +65,7 @@ class S3Destination extends Writable {
       Body: stream.pipe(zip),
     }).promise();
 
-    this.destinations.set(partition, {
+    this.uploads.set(partition, {
       promise,
       stream,
     });
