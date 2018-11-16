@@ -1,78 +1,12 @@
 'use strict';
 
+const assert = require('assert');
 const https = require('https');
 const { PassThrough, Writable } = require('stream');
 const zlib = require('zlib');
 
 const aws = require('aws-sdk');
-
-class S3Destination extends Writable {
-  constructor(options) {
-    super({ objectMode: true });
-
-    this.bucket = options.bucket;
-    this.client = options.client;
-    this.getValue = options.value;
-    this.getPartition = options.partition;
-    this.uploads = new Map();
-  }
-
-  _write(event, encoding, callback) {
-    try {
-      const partition = this.getPartition(event);
-      const stream = this.getStream(partition);
-      const value = this.getValue(event);
-
-      stream.push(value);
-      stream.push('\n');
-
-      callback();
-    } catch (err) {
-      this.emit('error', err);
-    }
-  }
-
-  _final(callback) {
-    Promise.resolve()
-      .then(() => {
-        const values = this.uploads.values();
-        const promises = Array.from(values).map(upload => {
-          upload.stream.push(null);
-          return upload.promise;
-        });
-
-        return Promise.all(promises);
-      })
-      .then(() => callback())
-      .catch(e => callback(e));
-  }
-
-  getStream(partition) {
-    const upload = this.uploads.get(partition);
-
-    if (upload) {
-      return upload.stream;
-    }
-
-    const date = new Date().getTime();
-    const key = `${partition}-${date}.zip`;
-    const stream = new PassThrough();
-    const zip = zlib.createGzip();
-
-    const promise = this.client.upload({
-      Key: key,
-      Bucket: this.bucket,
-      Body: stream.pipe(zip),
-    }).promise();
-
-    this.uploads.set(partition, {
-      promise,
-      stream,
-    });
-
-    return stream;
-  }
-}
+const uuid = require('uuid');
 
 function defaultClient() {
   const agent = new https.Agent({ keepAlive: true });
@@ -84,22 +18,78 @@ function defaultClient() {
 }
 
 module.exports = (options = {}) => {
-  const {
-    bucket,
-    client = defaultClient(),
-    partition,
-    value,
-  } = options;
+  const { bucket, client = defaultClient() } = options;
 
-  if (typeof partition !== 'function') {
-    throw new Error('fauxherhose-destination-s3: must provide a partition() function');
-  }
+  const getValue = options.value;
+  const getPrefix = options.prefix;
 
-  if (typeof value !== 'function') {
-    throw new Error('fauxherhose-destination-s3: must provide a value() function');
-  }
+  assert(typeof getPrefix === 'function', 'fauxherhose-destination-s3: must provide a prefix function');
+  assert(typeof getValue === 'function', 'fauxherhose-destination-s3: must provide a value function');
 
-  return () => {
-    return new S3Destination({ bucket, client, partition, value });
+  return class S3Destination extends Writable {
+    constructor() {
+      super({ objectMode: true });
+  
+      this.uploads = new Map();
+    }
+  
+    _write(record, encoding, callback) {
+      try {
+        const prefix = getPrefix(record);
+        const value = getValue(record);
+
+        const stream = this.getStream(prefix);
+  
+        stream.push(value);
+        stream.push('\n');
+  
+        callback();
+      } catch (err) {
+        this.emit('error', err);
+      }
+    }
+  
+    _final(callback) {
+      Promise.resolve()
+        .then(() => {
+          const values = this.uploads.values();
+          const promises = Array.from(values).map(upload => {
+            upload.stream.push(null);
+            return upload.promise;
+          });
+  
+          return Promise.all(promises);
+        })
+        .then(() => callback())
+        .catch(e => callback(e));
+    }
+  
+    getStream(prefix) {
+      const upload = this.uploads.get(prefix);
+  
+      if (upload) {
+        return upload.stream;
+      }
+  
+      const date = new Date().getTime();
+      const random = uuid.v4();
+      const key = `${prefix}/${date}-${random}.zip`;
+      const stream = new PassThrough();
+      const zip = zlib.createGzip();
+  
+      const promise = client.upload({
+        Key: key,
+        Bucket: bucket,
+        Body: stream.pipe(zip),
+      }).promise();
+  
+      this.uploads.set(prefix, {
+        promise,
+        stream,
+        key,
+      });
+  
+      return stream;
+    }
   };
 };

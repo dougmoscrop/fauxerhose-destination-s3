@@ -1,6 +1,6 @@
 {
   "name": "fauxerhose-destination-s3",
-  "version": "0.0.4",
+  "version": "1.0.0",
   "description": "A destination for S3 files (ideally for Athena queries)",
   "main": "s3-destination.js",
   "scripts": {
@@ -27,5 +27,11 @@
     "aws-sdk": "^2.355.0",
     "eslint": "^5.9.0",
     "nyc": "^13.1.0"
+  },
+  "peerDependencies": {
+    "fauxerhose": "^2.0.0"
+  },
+  "dependencies": {
+    "uuid": "^3.3.2"
   }
 }
