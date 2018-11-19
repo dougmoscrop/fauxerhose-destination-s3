@@ -73,7 +73,7 @@ module.exports = (options = {}) => {
   
       const date = new Date().getTime();
       const random = uuid.v4();
-      const key = `${prefix}/${date}-${random}.zip`;
+      const key = `${prefix}/${date}-${random}.gz`;
       const stream = new PassThrough();
       const zip = zlib.createGzip();
   
